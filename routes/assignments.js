@@ -1,6 +1,7 @@
 const express = require('express');
 const Assignment = require('../models/Assignment');
 const { authRequired, adminOnly } = require('../middleware/auth');
+const { toApiShape, bodyToSchemaFields } = require('../utils/assignmentNormalize');
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ router.get('/', authRequired, async (req, res) => {
     ]);
 
     res.json({
-      data: items,
+      data: items.map((doc) => toApiShape(doc)),
       page,
       limit,
       total,
@@ -34,7 +35,7 @@ router.get('/:id', authRequired, async (req, res) => {
     if (!doc) {
       return res.status(404).json({ message: 'Assignment introuvable' });
     }
-    res.json(doc);
+    res.json(toApiShape(doc));
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Erreur serveur' });
@@ -43,10 +44,10 @@ router.get('/:id', authRequired, async (req, res) => {
 
 router.post('/', authRequired, async (req, res) => {
   try {
-    const body = normalizeBody(req.body);
+    const body = bodyToSchemaFields(req.body);
     const assignment = new Assignment(body);
     await assignment.save();
-    res.status(201).json(assignment);
+    res.status(201).json(toApiShape(assignment.toObject()));
   } catch (err) {
     if (err.name === 'ValidationError') {
       return res.status(400).json({ message: err.message, errors: err.errors });
@@ -58,7 +59,7 @@ router.post('/', authRequired, async (req, res) => {
 
 router.put('/:id', authRequired, adminOnly, async (req, res) => {
   try {
-    const body = normalizeBody(req.body);
+    const body = bodyToSchemaFields(req.body);
     const updated = await Assignment.findByIdAndUpdate(req.params.id, body, {
       new: true,
       runValidators: true,
@@ -66,7 +67,7 @@ router.put('/:id', authRequired, adminOnly, async (req, res) => {
     if (!updated) {
       return res.status(404).json({ message: 'Assignment introuvable' });
     }
-    res.json(updated);
+    res.json(toApiShape(updated.toObject()));
   } catch (err) {
     if (err.name === 'ValidationError') {
       return res.status(400).json({ message: err.message, errors: err.errors });
@@ -88,26 +89,5 @@ router.delete('/:id', authRequired, adminOnly, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
-
-function normalizeBody(body) {
-  const grade =
-    body.grade === '' || body.grade === undefined || body.grade === null
-      ? null
-      : Number(body.grade);
-
-  return {
-    nom: body.nom,
-    dateDeRendu: body.dateDeRendu ? new Date(body.dateDeRendu) : undefined,
-    rendu: Boolean(body.rendu),
-    authorName: body.authorName ?? '',
-    authorPhoto: body.authorPhoto ?? '',
-    subject: body.subject,
-    subjectImageUrl: body.subjectImageUrl ?? '',
-    teacherName: body.teacherName ?? '',
-    teacherPhotoUrl: body.teacherPhotoUrl ?? '',
-    grade: Number.isFinite(grade) ? grade : null,
-    remarks: body.remarks ?? '',
-  };
-}
 
 module.exports = router;

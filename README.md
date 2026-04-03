@@ -38,6 +38,10 @@ Comptes créés :
 | user  | demo123        | user  |
 | admin | demo123        | admin |
 
+**Important :** les utilisateurs sont stockés dans la collection **`users`** de la base indiquée dans `MONGODB_URI`. Si vous changez d’URI (par ex. vers `assignmentsDB`), cette base peut ne contenir **aucun** compte : la connexion renverra alors **401**. Dans ce cas, relancez **`npm run seed:users`** après avoir mis à jour `.env`, puis redémarrez l’API.
+
+Au démarrage, si la collection `users` est vide, un avertissement est affiché dans la console du serveur.
+
 Seul **admin** peut **modifier** ou **supprimer** des assignments (routes `PUT` / `DELETE`).
 
 ## Devoirs d’exemple (tableau non vide en local)
@@ -70,6 +74,8 @@ Cela insère quelques devoirs **uniquement si** la collection est vide. Sinon le
    - Ou **mongoimport** (CLI) en pointant vers votre URI et la collection `assignments`.
 
 Adaptez les noms de champs pour qu’ils correspondent au schéma ([models/Assignment.js](models/Assignment.js)). Les dates doivent être au format ISO si possible.
+
+L’API accepte aussi des jeux importés avec les anciens noms (ex. **matiere**, **note**, **auteur**, **prof**, **remarques**, **imageMatiere**, **rendu** en chaîne `"true"` / `"false"`, **dateDeRendu** au format `AAAA/MM/JJ`) : ils sont **normalisés** en réponse JSON vers **subject**, **grade**, **authorName**, etc., pour le front Angular.
 
 ## Déploiement Render (Web Service)
 

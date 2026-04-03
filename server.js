@@ -44,7 +44,15 @@ async function start() {
   }
 
   await mongoose.connect(process.env.MONGODB_URI);
-  console.log('MongoDB connecté');
+  const dbName = mongoose.connection.db?.databaseName ?? '?';
+  console.log(`MongoDB connecté (base : ${dbName})`);
+
+  const usersCount = await mongoose.connection.db.collection('users').countDocuments();
+  if (usersCount === 0) {
+    console.warn(
+      '[auth] Aucun document dans la collection « users ». Les comptes user/admin existent par base : lancez « npm run seed:users » avec le même MONGODB_URI.'
+    );
+  }
 
   app.listen(PORT, () => {
     console.log(`API sur le port ${PORT}`);

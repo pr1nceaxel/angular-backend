@@ -11,7 +11,8 @@ router.post('/login', async (req, res) => {
     if (!login || !password) {
       return res.status(400).json({ message: 'Login et mot de passe requis' });
     }
-    const user = await User.findOne({ login: String(login).trim() });
+    const loginNorm = String(login).trim().toLowerCase();
+    const user = await User.findOne({ login: loginNorm });
     if (!user) {
       return res.status(401).json({ message: 'Identifiants incorrects' });
     }

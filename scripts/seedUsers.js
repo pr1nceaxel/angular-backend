@@ -16,6 +16,9 @@ async function run() {
     process.exit(1);
   }
   await mongoose.connect(process.env.MONGODB_URI);
+  const dbName = mongoose.connection.db?.databaseName ?? '?';
+  console.log(`Base MongoDB : ${dbName} (collection users)`);
+
   const hash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
 
   await User.deleteMany({ login: { $in: ['user', 'admin'] } });
