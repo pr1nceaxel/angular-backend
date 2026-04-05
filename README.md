@@ -1,90 +1,165 @@
-# API Assignments (Express + MongoDB + JWT)
+# API Assignments — Back-end (Express + MongoDB + JWT)
+
+API REST pour le mini-projet **Assignments** : authentification par login / mot de passe, JWT, CRUD des devoirs avec règles métier (note obligatoire si « rendu ») et droits **admin** pour modification / suppression.
+
+Ce dépôt correspond au **back-end**. L’application Angular se trouve dans le dépôt / dossier **assignment-app** associé (voir son README).
+
+---
+
+## Binôme et contributions
+
+| Étudiant(e) | Rôle sur ce dépôt |
+|-------------|-------------------|
+| **Hien Yao Axel Vianney** | **Back-end** : serveur Express, MongoDB (Mongoose), schémas `User` et `Assignment`, routes `/api/auth` et `/api/assignments`, bcrypt, **JWT**, contrôle **admin** sur `PUT` / `DELETE`, **CORS**, seeds (`seed:users`, `seed:assignments`, **`seed:bulk`** pour 1000+ devoirs avec URLs), fichier **`subjectsCatalog`** aligné au front, **normalisation** des réponses API (imports Mockaroo, images type `nodejs.png`, photo auteur), filtres recherche/matière côté liste, documentation et déploiement Render. |
+| **Yao Gnamien Emmanuella** | **Front-end** (autre dépôt) : application Angular, interface utilisateur, appels HTTP vers cette API, guards et expérience de connexion. |
+
+Les deux membres ont pu se coordonner sur le **format des requêtes / réponses JSON** et les scénarios de test (connexion, liste, création, édition admin).
+
+---
+
+## Liens utiles (à compléter pour le rendu)
+
+- Dépôt GitHub **front** : git@github.com:pr1nceaxel/angular-frontend.git
+- Dépôt GitHub **back** : git@github.com:pr1nceaxel/angular-backend.git
+- Application déployée (Render, Vercel, etc.) : 
+- Vidéo de démo YouTube (≤ 2 min) : 
+
+---
 
 ## Prérequis
 
-- Node.js 18+
-- Un cluster **MongoDB Atlas** (votre propre base, pas celle du cours)
+- **Node.js** 18 ou plus récent  
+- Un cluster **MongoDB Atlas** (ou instance MongoDB) — **votre propre base**, pas celle du cours
+
+---
 
 ## Configuration
 
-1. Copiez `.env.example` vers `.env`.
-2. Renseignez :
-   - `MONGODB_URI` : chaîne de connexion Atlas (Database → Connect → Drivers).
-   - `JWT_SECRET` : chaîne longue et secrète (générez-en une au hasard).
-   - `PORT` : par défaut `8010` en local.
-   - `CORS_ORIGINS` : `http://localhost:4200` en dev ; ajoutez l’URL de votre front déployé (Render/Vercel), séparée par des virgules.
+1. Copier `.env.example` vers `.env`.
+2. Renseigner au minimum :
+
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | Chaîne de connexion (Atlas : *Database* → *Connect* → *Drivers*) |
+| `JWT_SECRET` | Secret long et aléatoire pour signer les tokens |
+| `PORT` | Port d’écoute (ex. `8010` en local ; Render fournit souvent `PORT`) |
+| `CORS_ORIGINS` | Origines autorisées, séparées par des virgules : `http://localhost:4200` + URL du front déployé |
+
+---
 
 ## Installation et démarrage
 
 ```bash
+git clone <URL-du-depot-back>
+cd back-end
 npm install
 npm start
 ```
 
-Healthcheck : `GET http://localhost:8010/api/health`
+Vérification : `GET http://localhost:8010/api/health` doit renvoyer `{ "ok": true, ... }`.
+
+---
 
 ## Utilisateurs de test
 
-Après configuration de `.env` :
+Après un `.env` valide :
 
 ```bash
 npm run seed:users
 ```
 
-Comptes créés :
-
-| Login | Mot de passe | Rôle  |
-|-------|----------------|-------|
-| user  | demo123        | user  |
+| Login | Mot de passe | Rôle |
+|-------|----------------|------|
+| user  | demo123        | user |
 | admin | demo123        | admin |
 
-**Important :** les utilisateurs sont stockés dans la collection **`users`** de la base indiquée dans `MONGODB_URI`. Si vous changez d’URI (par ex. vers `assignmentsDB`), cette base peut ne contenir **aucun** compte : la connexion renverra alors **401**. Dans ce cas, relancez **`npm run seed:users`** après avoir mis à jour `.env`, puis redémarrez l’API.
+**Important :** les comptes sont dans la collection **`users`**. Si vous changez de base dans `MONGODB_URI`, relancez `npm run seed:users`. Si la connexion renvoie **401**, vérifiez que les utilisateurs existent dans la bonne base.
 
-Au démarrage, si la collection `users` est vide, un avertissement est affiché dans la console du serveur.
+Seul le rôle **admin** peut **modifier** ou **supprimer** des assignments (`PUT` / `DELETE`).
 
-Seul **admin** peut **modifier** ou **supprimer** des assignments (routes `PUT` / `DELETE`).
+---
 
-## Devoirs d’exemple (tableau non vide en local)
+## Données de devoirs (liste non vide)
 
-Si la liste Angular est vide alors que l’API répond correctement, la collection MongoDB `assignments` ne contient souvent **aucun document** (seuls les comptes utilisateurs sont créés par `seed:users`).
-
-Après `npm run seed:users`, exécutez :
+Si la collection **`assignments`** est vide, la liste côté Angular le sera aussi. Après `seed:users`, vous pouvez lancer :
 
 ```bash
 npm run seed:assignments
 ```
 
-Cela insère quelques devoirs **uniquement si** la collection est vide. Sinon le message indique combien de documents existent déjà (vous pouvez aussi ajouter des devoirs via **Nouveau devoir** dans l’app).
+(insère quelques devoirs si la collection est vide). Sinon : formulaire **Nouveau devoir** dans l’app, ou import **≥ 1000** enregistrements avec **Mockaroo** (voir ci-dessous).
 
-## API utile
+### Générer ~1000 devoirs avec URLs (comme le formulaire)
 
-- `POST /api/auth/login` — body JSON `{ "login", "password" }` → `{ token, user }`
-- `GET /api/assignments?page=1&limit=15` — JWT requis
-- `GET /api/assignments/:id` — JWT requis
-- `POST /api/assignments` — JWT requis (tout utilisateur connecté)
-- `PUT /api/assignments/:id` — JWT + rôle **admin**
-- `DELETE /api/assignments/:id` — JWT + rôle **admin**
+Le script **`seed:bulk`** insère des documents avec les **mêmes URLs** que l’app Angular pour chaque matière (`config/subjectsCatalog.js`, aligné sur `subjects.ts`), et une **photo élève aléatoire** (`pravatar`) par ligne.
 
-## Import de 1000+ devoirs (Mockaroo)
+```bash
+npm run seed:bulk
+```
 
-1. Sur [mockaroo.com](https://www.mockaroo.com/), créez un schéma aligné avec le modèle Mongoose (`nom`, `dateDeRendu`, `rendu`, `authorName`, `subject`, `subjectImageUrl`, `teacherName`, `teacherPhotoUrl`, `grade`, `remarks`, etc.).
-2. Exportez au moins **1000** lignes en **JSON** (tableau) ou **CSV**.
-3. Import dans MongoDB Atlas :
-   - **Compass** : connectez-vous à la base → collection `assignments` → *Add Data* → *Import JSON or CSV file*.
-   - Ou **mongoimport** (CLI) en pointant vers votre URI et la collection `assignments`.
+- Comportement par défaut : si la collection a **moins de 1000** documents, le script **complète** jusqu’à 1000. Si vous avez déjà ≥ 1000, il ne fait rien.
+- `BULK_TARGET=1500 npm run seed:bulk` — autre objectif.
+- `FORCE_BULK=1 npm run seed:bulk` — ajoute **BULK_TARGET** devoirs en plus, même si le total dépasse déjà l’objectif.
 
-Adaptez les noms de champs pour qu’ils correspondent au schéma ([models/Assignment.js](models/Assignment.js)). Les dates doivent être au format ISO si possible.
-
-L’API accepte aussi des jeux importés avec les anciens noms (ex. **matiere**, **note**, **auteur**, **prof**, **remarques**, **imageMatiere**, **rendu** en chaîne `"true"` / `"false"`, **dateDeRendu** au format `AAAA/MM/JJ`) : ils sont **normalisés** en réponse JSON vers **subject**, **grade**, **authorName**, etc., pour le front Angular.
-
-## Déploiement Render (Web Service)
-
-1. Nouveau **Web Service** depuis votre dépôt Git du back-end.
-2. Build : `npm install` (ou laissez vide si détection auto).
-3. Start : `npm start` ou `node server.js`.
-4. Variables d’environnement sur Render : `MONGODB_URI`, `JWT_SECRET`, `PORT` (souvent injecté par Render), `CORS_ORIGINS` = URL publique de votre front.
+Les réponses JSON de l’API **complètent aussi** les anciens imports : si `imageMatiere` vaut par ex. `nodejs.png` mais que la **matière** correspond au catalogue (ex. « Technologies Web »), les champs `subjectImageUrl` / `teacherPhotoUrl` renvoyés au front utilisent les **URLs HTTPS** du catalogue. Idem pour une **photo auteur** absente ou non-URL : avatar pravatar cohérent avec le nom.
 
 ---
 
-*Ajoutez ici la section « Contributions du binôme » pour le rendu.*
-# angular-backend
+## API principale
+
+| Méthode | Route | Accès |
+|---------|--------|--------|
+| POST | `/api/auth/login` | Public — body `{ "login", "password" }` → `{ token, user }` |
+| GET | `/api/assignments?page=&limit=&q=&subject=&rendu=` | JWT — liste triée par **plus récent d’abord** (`_id` desc.). **q** : recherche (nom, matière, auteur). **subject** : matière exacte (libellé). **rendu** : `true` / `false` |
+| GET | `/api/assignments/:id` | JWT |
+| POST | `/api/assignments` | JWT (utilisateur connecté) |
+| PUT | `/api/assignments/:id` | JWT + **admin** |
+| DELETE | `/api/assignments/:id` | JWT + **admin** |
+
+---
+
+## Import de 1000+ devoirs (Mockaroo — consigne mini-projet)
+
+1. Sur [mockaroo.com](https://www.mockaroo.com/), définir un schéma aligné avec [models/Assignment.js](models/Assignment.js) (`nom`, `dateDeRendu`, `rendu`, `authorName`, `subject`, `subjectImageUrl`, `teacherName`, `teacherPhotoUrl`, `grade`, `remarks`, etc.).
+2. Exporter au moins **1000** lignes (JSON ou CSV).
+3. Importer dans Atlas : **Compass** → collection `assignments` → *Import*, ou **mongoimport** avec la même URI que dans `.env`.
+
+Les dates au format ISO sont recommandées. L’API peut normaliser certains anciens noms de champs (voir commentaires dans le code si présents).
+
+---
+
+## Déploiement Render (Web Service)
+
+1. Code sur **GitHub** (branche `main` ou `master`), sans committer `.env`.
+2. [Render](https://render.com) → *New* → **Web Service** → choisir ce dépôt.
+3. **Root directory** : laisser vide si `package.json` est à la racine du dépôt ; sinon indiquer le dossier du back-end.
+4. **Environment** : Node.
+5. **Build command** : `npm install`
+6. **Start command** : `npm start`
+7. **Variables** (onglet *Environment*) :
+
+| Variable | Exemple / remarque |
+|----------|--------------------|
+| `MONGODB_URI` | URI complète Atlas (`mongodb+srv://...`) |
+| `JWT_SECRET` | Chaîne longue et secrète |
+| `CORS_ORIGINS` | `https://votre-front.onrender.com` (ajoutez `http://localhost:4200` séparé par une virgule si besoin) |
+| `PORT` | Souvent **auto** sur Render ; sinon laisser Render injecter `PORT` (votre `server.js` doit utiliser `process.env.PORT`). |
+
+8. Déployer, noter l’URL HTTPS de l’API ; la communiquer au front (`environment.prod.ts` → `.../api`).
+9. Après déploiement du **front**, **mettre à jour** `CORS_ORIGINS` avec l’URL finale du site statique et **redéployer** ou redémarrer le service.
+
+**Plan gratuit** : le service peut se mettre en veille ; le premier appel après inactivité peut être lent.
+
+---
+
+## Guide rapide pour faire tourner le projet sur une autre machine
+
+1. Cloner ce dépôt et configurer `.env` (MongoDB + JWT + CORS).
+2. `npm install` → `npm run seed:users` → `npm start`.
+3. Cloner le **front** (`assignment-app`), `npm install`, pointer `environment.ts` vers `http://localhost:8010/api`, puis `npm start`.
+4. Ouvrir **http://localhost:4200** et tester avec `user` / `admin`.
+
+Pour la correction sans build local : fournir l’**URL du front** et l’**URL de l’API** déployées (feuille Google demandée par l’enseignante).
+
+---
+

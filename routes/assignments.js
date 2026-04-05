@@ -2,6 +2,7 @@ const express = require('express');
 const Assignment = require('../models/Assignment');
 const { authRequired, adminOnly } = require('../middleware/auth');
 const { toApiShape, bodyToSchemaFields } = require('../utils/assignmentNormalize');
+const { buildListFilter } = require('../utils/assignmentQuery');
 
 const router = express.Router();
 
@@ -11,9 +12,13 @@ router.get('/', authRequired, async (req, res) => {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
     const skip = (page - 1) * limit;
 
+    const filter = buildListFilter(req.query);
+    // Plus récent en haut : ObjectId reflète l’ordre d’insertion (nouveaux devoirs d’abord)
+    const sort = { _id: -1 };
+
     const [items, total] = await Promise.all([
-      Assignment.find().sort({ dateDeRendu: 1 }).skip(skip).limit(limit).lean(),
-      Assignment.countDocuments(),
+      Assignment.find(filter).sort(sort).skip(skip).limit(limit).lean(),
+      Assignment.countDocuments(filter),
     ]);
 
     res.json({

@@ -3,6 +3,41 @@
  * (Mockaroo / cours : matiere, note, auteur, prof, remarques, imageMatiere, rendu string).
  */
 
+const SUBJECTS_CATALOG = require('../config/subjectsCatalog');
+
+function isHttpUrl(s) {
+  if (s == null || typeof s !== 'string') return false;
+  return /^https?:\/\//i.test(s.trim());
+}
+
+/** Si la matière est dans le catalogue et les URLs sont absentes ou type « nodejs.png », on applique les mêmes URLs que le front. */
+function enrichImagesFromCatalog(o) {
+  const label = String(o.subject || o.matiere || '').trim();
+  if (!label) return;
+  const cat = SUBJECTS_CATALOG.find((s) => s.label.toLowerCase() === label.toLowerCase());
+  if (!cat) return;
+
+  if (!isHttpUrl(o.subjectImageUrl)) {
+    o.subjectImageUrl = cat.subjectImageUrl;
+  }
+  if (!isHttpUrl(o.teacherPhotoUrl)) {
+    o.teacherName = cat.teacherName;
+    o.teacherPhotoUrl = cat.teacherPhotoUrl;
+  }
+}
+
+/** Avatar élève : si pas d’URL valide (import Mockaroo sans photo), pravatar stable selon le nom. */
+function enrichAuthorPhotoIfNeeded(o) {
+  if (isHttpUrl(o.authorPhoto)) return;
+  const name = String(o.authorName || o.auteur || '').trim();
+  if (!name) return;
+  let h = 0;
+  for (let i = 0; i < name.length; i += 1) {
+    h = (h + name.charCodeAt(i) * (i + 1)) % 69;
+  }
+  o.authorPhoto = `https://i.pravatar.cc/150?img=${h + 1}`;
+}
+
 function coerceRendu(value) {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'string') {
@@ -75,6 +110,9 @@ function toApiShape(doc) {
   if (parsed) {
     o.dateDeRendu = parsed.toISOString();
   }
+
+  enrichImagesFromCatalog(o);
+  enrichAuthorPhotoIfNeeded(o);
 
   return o;
 }
