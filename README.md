@@ -21,8 +21,8 @@ Les deux membres ont pu se coordonner sur le **format des requêtes / réponses 
 
 - Dépôt GitHub **front** : git@github.com:pr1nceaxel/angular-frontend.git
 - Dépôt GitHub **back** : git@github.com:pr1nceaxel/angular-backend.git
-- Application déployée (Render, Vercel, etc.) : 
-- Vidéo de démo YouTube (≤ 2 min) : 
+- Application déployée  : https://angular-frontend-7fkd.onrender.com/login
+- Vidéo de démo YouTube : 
 
 ---
 
@@ -128,38 +128,12 @@ Les dates au format ISO sont recommandées. L’API peut normaliser certains anc
 
 ---
 
-## Déploiement Render (Web Service)
-
-1. Code sur **GitHub** (branche `main` ou `master`), sans committer `.env`.
-2. [Render](https://render.com) → *New* → **Web Service** → choisir ce dépôt.
-3. **Root directory** : laisser vide si `package.json` est à la racine du dépôt ; sinon indiquer le dossier du back-end.
-4. **Environment** : Node.
-5. **Build command** : `npm install`
-6. **Start command** : `npm start`
-7. **Variables** (onglet *Environment*) :
-
-| Variable | Exemple / remarque |
-|----------|--------------------|
-| `MONGODB_URI` | URI complète Atlas (`mongodb+srv://...`) |
-| `JWT_SECRET` | Chaîne longue et secrète |
-| `CORS_ORIGINS` | `https://votre-front.onrender.com` (ajoutez `http://localhost:4200` séparé par une virgule si besoin) |
-| `PORT` | Souvent **auto** sur Render ; sinon laisser Render injecter `PORT` (votre `server.js` doit utiliser `process.env.PORT`). |
-
-8. Déployer, noter l’URL HTTPS de l’API ; la communiquer au front (`environment.prod.ts` → `.../api`).
-9. Après déploiement du **front**, **mettre à jour** `CORS_ORIGINS` avec l’URL finale du site statique et **redéployer** ou redémarrer le service.
-
-**Plan gratuit** : le service peut se mettre en veille ; le premier appel après inactivité peut être lent.
-
----
-
 ## Guide rapide pour faire tourner le projet sur une autre machine
 
 1. Cloner ce dépôt et configurer `.env` (MongoDB + JWT + CORS).
 2. `npm install` → `npm run seed:users` → `npm start`.
 3. Cloner le **front** (`assignment-app`), `npm install`, pointer `environment.ts` vers `http://localhost:8010/api`, puis `npm start`.
 4. Ouvrir **http://localhost:4200** et tester avec `user` / `admin`.
-
-Pour la correction sans build local : fournir l’**URL du front** et l’**URL de l’API** déployées (feuille Google demandée par l’enseignante).
 
 ---
 
