@@ -22,14 +22,14 @@ Les deux membres ont pu se coordonner sur le **format des requêtes / réponses 
 - Dépôt GitHub **front** : git@github.com:pr1nceaxel/angular-frontend.git
 - Dépôt GitHub **back** : git@github.com:pr1nceaxel/angular-backend.git
 - Application déployée  : https://angular-frontend-7fkd.onrender.com/login
-- Vidéo de démo YouTube : 
+- Vidéo de démo YouTube : https://youtu.be/M9_bfsk5XvY
 
 ---
 
 ## Prérequis
 
 - **Node.js** 18 ou plus récent  
-- Un cluster **MongoDB Atlas** (ou instance MongoDB) — **votre propre base**, pas celle du cours
+- Un cluster **MongoDB Atlas**  
 
 ---
 
@@ -50,8 +50,8 @@ Les deux membres ont pu se coordonner sur le **format des requêtes / réponses 
 ## Installation et démarrage
 
 ```bash
-git clone <URL-du-depot-back>
-cd back-end
+git clone git@github.com:pr1nceaxel/angular-backend.git
+cd angular-backend
 npm install
 npm start
 ```
